@@ -1,0 +1,595 @@
+{
+  "name": "Honeypot Sentinel - Automated Threat Detection",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Extract data from Webhook input\nconst data = items[0].json.body;\n\n// Extract main information from nested Logstash log\nconst src_ip = data.body.src_ip || data.src_ip || \"0.0.0.0\";\nconst commands = data.body.commands_list || [];\nconst event_id = data.body.cowrie_data.eventid;\n\n// Return structured data for downstream processing\nreturn [{\n  json: {\n    Attacker_IP: src_ip,\n    Full_Commands: commands.join(', '),\n    Total_Commands: commands.length,\n    Event: event_id,\n    Timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -848,
+        -32
+      ],
+      "id": "dfbc2b14-50ac-400a-a611-834dd3b76050",
+      "name": "Parse Honeypot Data"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "honeypot_logs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1024,
+        -32
+      ],
+      "id": "f4ea58c5-bfd8-4ffe-a7ec-d3c51f05cf0d",
+      "name": "Webhook",
+      "webhookId": "YOUR-WEBHOOK-ID-HERE"
+    },
+    {
+      "parameters": {
+        "url": "https://api.abuseipdb.com/api/v2/check",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ipAddress",
+              "value": "={{ $node[\"Parse Honeypot Data\"].json[\"Attacker_IP\"] }}"
+            },
+            {
+              "name": "maxAgeInDays",
+              "value": "90"
+            },
+            {
+              "name": "verbose",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -512,
+        -32
+      ],
+      "id": "51760dcd-bf1c-43b1-8a1a-69d7484fdf3c",
+      "name": "AbuseIPDB Reputation Check",
+      "alwaysOutputData": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR-CREDENTIAL-ID",
+          "name": "AbuseIPDB API Key"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "errorMessage": "=Error occurred in workflow {{ $workflow.name }} at AbuseIPDB HTTP Request node"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        64
+      ],
+      "id": "15e8816b-30dd-48db-a823-658d9c6dc28d",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "=PROMPT=$(cat <<'EOF'\nYou are a Senior Threat Detection Engineer and SOC Analyst.\nYour mission is to convert raw attack logs into actionable intelligence and high-level incident reports.\n\n<environment_context>\n- Asset: VPS running as Honeypot (Cowrie SSH/Telnet honeypot).\n- Monitoring: Integrated via Filebeat and n8n for real-time analysis.\n</environment_context>\n\n<incident_data>\n- Attacker IP: {{ $node[\"Parse Honeypot Data\"].json[\"Attacker_IP\"] }}\n- IP Reputation (AbuseIPDB): Score: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.abuseConfidenceScore || \"0\" }}% confidence of abuse.\n- Geolocation & ISP: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.countryCode || \"Unknown\" }} | {{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp || \"Unknown\" }}\n- Command Sequence: {{ $node[\"Parse Honeypot Data\"].json[\"Full_Commands\"] }}\n- Timestamp: {{ $node[\"Parse Honeypot Data\"].json[\"Timestamp\"] }}\n</incident_data>\n\n<analysis_rules>\n1. MITRE ATT&CK CLASSIFICATION: Identify which tactic is being used.\n2. MALWARE ANALYSIS: Check download patterns.\n3. SEVERITY SCORE: Rate from 0 to 10.\n</analysis_rules>\n\n<discord_output_instruction>\nGenerate a structured alert for Discord using Markdown:\n- 🛡️ **SECURITY INCIDENT DETECTED**\n- **IP**: [IP] ([Country]) - Score: [Score]%\n- **AI Verdict**: [Short summary]\n- **Severity**: [0-100]\n- **Suggested Actions**: [Actions]\n- **Technical Insight**: [Professional technical summary]\n</discord_output_instruction>\nEOF\n)\n\ngemini --model gemini-2.0-flash \"$PROMPT\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        384,
+        80
+      ],
+      "id": "274fc3a1-2789-454d-8e17-1535e06acda6",
+      "name": "AI Threat Analysis",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "YOUR-SSH-CREDENTIAL-ID",
+          "name": "SSH Private Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "YOUR-DISCORD-GUILD-ID",
+          "mode": "list",
+          "cachedResultName": "Your Discord Server",
+          "cachedResultUrl": "https://discord.com/channels/YOUR-GUILD-ID"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR-DISCORD-CHANNEL-ID",
+          "mode": "list",
+          "cachedResultName": "honeypot-monitoring",
+          "cachedResultUrl": "https://discord.com/channels/YOUR-GUILD-ID/YOUR-CHANNEL-ID"
+        },
+        "content": "={{ $json.stdout }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        768,
+        -16
+      ],
+      "id": "20eb77bb-2995-4618-a2ce-0644d339047c",
+      "name": "Send Discord Alert",
+      "webhookId": "YOUR-DISCORD-WEBHOOK-ID",
+      "credentials": {
+        "discordBotApi": {
+          "id": "YOUR-DISCORD-BOT-CREDENTIAL-ID",
+          "name": "Discord Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR-GOOGLE-SHEETS-ID",
+          "mode": "list",
+          "cachedResultName": "Attack Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR-SHEET-ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR-SHEET-ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "COMMAND": "={{ $('Format Fields').item.json.Command }}",
+            "ATTACKER IP": "={{ $('Format Fields').item.json.Attacker_IP }}",
+            "TIMESTAMP": "={{ $('Format Fields').item.json.Timestamp }}",
+            "COUNTRY": "={{ $node[\"AbuseIPDB Reputation Check\"].json[\"data\"][\"countryCode\"] }}",
+            "ISP": "={{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp }}",
+            "ABUSEIPDB SCORE": "={{ $node[\"AbuseIPDB Reputation Check\"].json[\"data\"][\"abuseConfidenceScore\"] }}%"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "TIMESTAMP",
+              "displayName": "TIMESTAMP",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ATTACKER IP",
+              "displayName": "ATTACKER IP",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "COUNTRY",
+              "displayName": "COUNTRY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ISP",
+              "displayName": "ISP",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "COMMAND",
+              "displayName": "COMMAND",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ABUSEIPDB SCORE",
+              "displayName": "ABUSEIPDB SCORE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -320,
+        -128
+      ],
+      "id": "04f85af8-01c1-4bc9-a8bb-534bca3a7356",
+      "name": "Log to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR-GOOGLE-SHEETS-CREDENTIAL-ID",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "=sudo iptables -I INPUT 1 -s {{ $node[\"Format Fields\"].json[\"Attacker_IP\"] }} -j DROP"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        688,
+        -288
+      ],
+      "id": "56dad4b0-8a1a-455c-85a7-88a48724d587",
+      "name": "Block IP via iptables",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "YOUR-SSH-CREDENTIAL-ID",
+          "name": "SSH Private Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e1ec83c3-83f3-4aa3-8a9b-a17dc2356192",
+              "leftValue": "={{ $node[\"AbuseIPDB Reputation Check\"].json[\"data\"][\"abuseConfidenceScore\"] }}",
+              "rightValue": 80,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        -272
+      ],
+      "id": "2dbb6d74-537d-470f-aaa7-922154fb22c6",
+      "name": "Check Abuse Score"
+    },
+    {
+      "parameters": {
+        "curlImport": "",
+        "httpVariantWarning": "",
+        "method": "GET",
+        "url": "=https://www.virustotal.com/api/v3/urls/{{ $json.url_detected.toBase64().replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "virusTotalApi",
+        "provideSslCertificates": false,
+        "sendQuery": false,
+        "sendHeaders": false,
+        "sendBody": false,
+        "options": {},
+        "infoMessage": ""
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        272,
+        -80
+      ],
+      "id": "1bde22dc-731a-47a3-9321-3ce80312839a",
+      "name": "VirusTotal URL Scan",
+      "extendsCredential": "virusTotalApi",
+      "credentials": {
+        "virusTotalApi": {
+          "id": "YOUR-VIRUSTOTAL-CREDENTIAL-ID",
+          "name": "VirusTotal API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safely extract command from \"Format Fields\" node to avoid case errors\nconst command = $('Format Fields').item.json.Command || \"\";\n\n// Enhanced regex to capture URLs\nconst urlRegex = /(https?:\\/\\/[^\\s\"';<>]+)/gi;\nconst foundUrls = command.match(urlRegex);\n\nlet cleanUrl = null;\nif (foundUrls && foundUrls.length > 0) {\n  // Remove periods or commas that the attacker may have typed at the end of the URL\n  cleanUrl = foundUrls[0].replace(/[.,\"';<>]$/g, '');\n}\n\nreturn {\n  json: {\n    ...$input.item.json, // Keep spreadsheet data\n    url_detected: cleanUrl,\n    contains_url: !!cleanUrl\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        -32
+      ],
+      "id": "0b240744-2d0c-414e-92de-b05eb2d65af1",
+      "name": "Extract URLs from Commands"
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "=PROMPT=$(cat <<'EOF'\nYou are a Senior Malware Analyst and Threat Intelligence Specialist.\nYour mission is to analyze malicious URLs detected in honeypot attacks and provide actionable intelligence.\n\n<environment_context>\n- Asset: VPS running as Honeypot (Cowrie SSH/Telnet honeypot).\n- Detection: URL extracted from attacker command sequence and scanned via VirusTotal API.\n</environment_context>\n\n<incident_data>\n- Attacker IP: {{ $node[\"Parse Honeypot Data\"].json[\"Attacker_IP\"] }}\n- Extracted URL: {{ $node[\"Extract URLs from Commands\"].json.url_detected }}\n- VirusTotal Scan Results: {{ $json }}\n- Geolocation & ISP: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.countryCode || \"Unknown\" }} | {{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp || \"Unknown\" }}\n- Command Sequence: {{ $node[\"Parse Honeypot Data\"].json[\"Full_Commands\"] }}\n- Timestamp: {{ $node[\"Parse Honeypot Data\"].json[\"Timestamp\"] }}\n</incident_data>\n\n<analysis_rules>\n1. MALWARE CLASSIFICATION: Identify malware family/type based on VirusTotal results.\n2. THREAT LEVEL: Assess the severity of the malicious payload.\n3. IOC EXTRACTION: Extract relevant Indicators of Compromise.\n4. CAMPAIGN IDENTIFICATION: Determine if this is part of a known attack campaign.\n</analysis_rules>\n\n<discord_output_instruction>\nGenerate a structured malware alert for Discord using Markdown:\n- 🦠 **MALWARE URL DETECTED**\n- **URL**: [URL]\n- **IP**: [IP] ([Country])\n- **VirusTotal Detection**: [X/Y vendors flagged as malicious]\n- **Malware Family**: [Family name]\n- **Threat Level**: [Critical/High/Medium/Low]\n- **Attack Vector**: [Description]\n- **Recommended Actions**: [Actions]\n- **IOCs**: [List of indicators]\n</discord_output_instruction>\nEOF\n)\n\ngemini --model gemini-2.0-flash \"$PROMPT\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        512,
+        -80
+      ],
+      "id": "4065b841-a99b-4080-89d0-1913501ae973",
+      "name": "AI Malware Analysis",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "YOUR-SSH-CREDENTIAL-ID",
+          "name": "SSH Private Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5abdfe79-4cdc-4138-ad4a-afe5a2f9816b",
+              "leftValue": "={{ $json.contains_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        48,
+        -32
+      ],
+      "id": "82e155c8-9f89-4abd-ba1b-688c197e37e6",
+      "name": "Check for URLs"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ab496d80-e806-4ef2-8eb7-6710041963ae",
+              "name": "Command",
+              "value": "={{ $json.Full_Commands }}",
+              "type": "string"
+            },
+            {
+              "id": "2801ccc8-c1cb-448b-96ad-16ad60dcb1f2",
+              "name": "Attacker_IP",
+              "value": "={{ $json.Attacker_IP }}",
+              "type": "string"
+            },
+            {
+              "id": "83b32e89-b0f0-4582-bfdb-a7498c55b3ea",
+              "name": "Timestamp",
+              "value": "={{ $json.Timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -672,
+        -32
+      ],
+      "id": "c8dc4fe6-52e9-4f12-bfe5-57bcf0fbc28e",
+      "name": "Format Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Parse Honeypot Data": {
+      "main": [
+        [
+          {
+            "node": "Format Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Honeypot Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AbuseIPDB Reputation Check": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Threat Analysis": {
+      "main": [
+        [
+          {
+            "node": "Send Discord Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Check Abuse Score",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract URLs from Commands",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Block IP via iptables": {
+      "main": [
+        []
+      ]
+    },
+    "Check Abuse Score": {
+      "main": [
+        [
+          {
+            "node": "Block IP via iptables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VirusTotal URL Scan": {
+      "main": [
+        [
+          {
+            "node": "AI Malware Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract URLs from Commands": {
+      "main": [
+        [
+          {
+            "node": "Check for URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Malware Analysis": {
+      "main": [
+        [
+          {
+            "node": "Send Discord Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for URLs": {
+      "main": [
+        [
+          {
+            "node": "VirusTotal URL Scan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Threat Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Fields": {
+      "main": [
+        [
+          {
+            "node": "AbuseIPDB Reputation Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "",
+  "tags": []
+}

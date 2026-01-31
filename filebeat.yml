@@ -1,0 +1,63 @@
+###################### Filebeat Configuration for Cowrie Honeypot #########################
+
+# This configuration file is optimized for collecting and forwarding Cowrie honeypot logs
+# to Logstash for processing and analysis.
+
+# ============================== Filebeat inputs ===============================
+
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /path/to/cowrie/var/log/cowrie/cowrie.json*
+  json.keys_under_root: true
+  json.add_error_key: true
+  tags: ["honeypot_cowrie"]
+  ignore_older: 48h
+  scan_frequency: 10s
+  close_inactive: 1h
+
+# filestream input example (disabled by default)
+- type: filestream
+  id: my-filestream-id
+  enabled: false
+  paths:
+    - /var/log/*.log
+
+# ============================== Filebeat modules ==============================
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+# ======================= Elasticsearch template setting =======================
+
+setup.template.settings:
+  index.number_of_shards: 1
+
+# =================================== Kibana ===================================
+
+setup.kibana:
+  # Uncomment and configure if using Kibana
+  # host: "localhost:5601"
+
+# ================================== Outputs ===================================
+
+# ---------------------------- Logstash Output ----------------------------
+output.logstash:
+  hosts: ["localhost:5045"]
+
+# ================================= Processors =================================
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+
+# ================================== Logging ===================================
+
+# Sets log level. The default log level is info.
+# Available log levels are: error, warning, info, debug
+#logging.level: info
