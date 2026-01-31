@@ -10,6 +10,31 @@
 
 Honeypot Sentinel is an automated security monitoring solution that transforms raw honeypot attack logs into actionable threat intelligence. Built with n8n workflow automation, it provides real-time analysis, IP reputation checking, malware URL scanning, and AI-powered threat assessment.
 
+```mermaid
+graph TD
+    A[☠️ Hacker] -->|SSH Attack| B(🍯 Cowrie Honeypot)
+    B -->|JSON Logs| C{📝 Filebeat/Logstash}
+    C -->|Webhook| D[🧠 n8n Orchestrator]
+    
+    %% Pipeline de Enriquecimento (Sequencial)
+    D -->|1. Reputation Check| E[🌍 AbuseIPDB]
+    E -->|2. Malware Scan| F[🦠 VirusTotal]
+    F -->|3. Threat Analysis| G[🤖 Google Gemini AI]
+    
+    %% Decisão baseada na IA
+    G -->|Risk Score| H{⚖️ Decision Logic}
+    
+    H -->|Critical > 80%| I[🔥 Block IP via SSH/iptables]
+    H -->|Info / Warning| J[💬 Discord Notification]
+    I --> J
+    
+    style A fill:#ff4d4d,stroke:#333,stroke-width:2px,color:#fff
+    style B fill:#ff9f43,stroke:#333,stroke-width:2px,color:#fff
+    style D fill:#54a0ff,stroke:#333,stroke-width:2px,color:#fff
+    style G fill:#1dd1a1,stroke:#333,stroke-width:2px,color:#fff
+    style I fill:#ee5253,stroke:#333,stroke-width:4px,color:#fff
+```
+
 ### Key Features
 
 - 🔍 **Real-time Attack Monitoring** - Continuous monitoring of Cowrie honeypot logs via Filebeat and Logstash
