@@ -8,10 +8,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -848,
-        -32
+        -2608,
+        -48
       ],
-      "id": "dfbc2b14-50ac-400a-a611-834dd3b76050",
+      "id": "de516a4d-b9fb-4038-8433-63deb3096e14",
       "name": "Parse Honeypot Data"
     },
     {
@@ -23,12 +23,12 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1024,
-        -32
+        -2784,
+        -48
       ],
-      "id": "f4ea58c5-bfd8-4ffe-a7ec-d3c51f05cf0d",
+      "id": "83351b26-aac6-466e-b4ae-5953d863b931",
       "name": "Webhook",
-      "webhookId": "YOUR-WEBHOOK-ID-HERE"
+      "webhookId": "INSERT_YOUR_WEBHOOKID_HERE"
     },
     {
       "parameters": {
@@ -57,16 +57,16 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -512,
-        -32
+        -2272,
+        -48
       ],
-      "id": "51760dcd-bf1c-43b1-8a1a-69d7484fdf3c",
+      "id": "03d1e375-bd81-476a-9d91-4daec6d5c86e",
       "name": "AbuseIPDB Reputation Check",
       "alwaysOutputData": false,
       "credentials": {
         "httpHeaderAuth": {
-          "id": "YOUR-CREDENTIAL-ID",
-          "name": "AbuseIPDB API Key"
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "abuseIPDB"
         }
       },
       "onError": "continueErrorOutput"
@@ -78,190 +78,49 @@
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        -320,
-        64
+        -2080,
+        48
       ],
-      "id": "15e8816b-30dd-48db-a823-658d9c6dc28d",
+      "id": "84da5d2c-09a1-4551-82d1-06e6ac275271",
       "name": "Stop and Error"
     },
     {
       "parameters": {
         "authentication": "privateKey",
-        "command": "=PROMPT=$(cat <<'EOF'\nYou are a Senior Threat Detection Engineer and SOC Analyst.\nYour mission is to convert raw attack logs into actionable intelligence and high-level incident reports.\n\n<environment_context>\n- Asset: VPS running as Honeypot (Cowrie SSH/Telnet honeypot).\n- Monitoring: Integrated via Filebeat and n8n for real-time analysis.\n</environment_context>\n\n<incident_data>\n- Attacker IP: {{ $node[\"Parse Honeypot Data\"].json[\"Attacker_IP\"] }}\n- IP Reputation (AbuseIPDB): Score: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.abuseConfidenceScore || \"0\" }}% confidence of abuse.\n- Geolocation & ISP: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.countryCode || \"Unknown\" }} | {{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp || \"Unknown\" }}\n- Command Sequence: {{ $node[\"Parse Honeypot Data\"].json[\"Full_Commands\"] }}\n- Timestamp: {{ $node[\"Parse Honeypot Data\"].json[\"Timestamp\"] }}\n</incident_data>\n\n<analysis_rules>\n1. MITRE ATT&CK CLASSIFICATION: Identify which tactic is being used.\n2. MALWARE ANALYSIS: Check download patterns.\n3. SEVERITY SCORE: Rate from 0 to 10.\n</analysis_rules>\n\n<discord_output_instruction>\nGenerate a structured alert for Discord using Markdown:\n- 🛡️ **SECURITY INCIDENT DETECTED**\n- **IP**: [IP] ([Country]) - Score: [Score]%\n- **AI Verdict**: [Short summary]\n- **Severity**: [0-100]\n- **Suggested Actions**: [Actions]\n- **Technical Insight**: [Professional technical summary]\n</discord_output_instruction>\nEOF\n)\n\ngemini --model gemini-2.0-flash \"$PROMPT\""
+        "command": "=PROMPT=$(cat <<'EOF'\nYou are a Senior Threat Detection Engineer and SOC Analyst.\nYour mission is to convert raw attack logs into actionable intelligence and high-level incident reports.\n\n<environment_context>\n- Asset: VPS running as Honeypot (Cowrie SSH/Telnet honeypot).\n- Monitoring: Integrated via Filebeat and n8n for real-time analysis.\n</environment_context>\n\n<incident_data>\n- Attacker IP: {{ $node[\"Parse Honeypot Data\"].json[\"Attacker_IP\"] }}\n- IP Reputation (AbuseIPDB): Score: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.abuseConfidenceScore || \"0\" }}% confidence of abuse.\n- Geolocation & ISP: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.countryCode || \"Unknown\" }} | {{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp || \"Unknown\" }}\n- Command Sequence: {{ $node[\"Parse Honeypot Data\"].json[\"Full_Commands\"] }}\n- Timestamp: {{ $node[\"Parse Honeypot Data\"].json[\"Timestamp\"] }}\n</incident_data>\n\n<analysis_rules>\n1. MITRE ATT&CK CLASSIFICATION: Identify which tactic is being used.\n2. SEVERITY SCORE: Rate from 0 to 100.\n</analysis_rules>\n\n<discord_output_instruction>\nGenerate a structured alert for Discord using Markdown:\n- 🛡️ **SECURITY INCIDENT DETECTED**\n- **IP**: [IP] ([Country]) - Score: [Score]%\n- **MITRE ATT&CK Classification:[Tactic ID].[SubTactic ID] - [Short Description]**\n- **AI Verdict**: [Short summary]\n- **Severity**: [0-100]\n- **Suggested Actions**: [Actions]\n- **Technical Insight**: [Professional technical summary]\n</discord_output_instruction>\nEOF\n)\n\ngemini --model gemini-2.5-pro \"$PROMPT\""
       },
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        384,
-        80
+        -672,
+        160
       ],
-      "id": "274fc3a1-2789-454d-8e17-1535e06acda6",
+      "id": "82cd3cf5-7c11-49cb-aa9f-0c695f39bd19",
       "name": "AI Threat Analysis",
       "credentials": {
         "sshPrivateKey": {
-          "id": "YOUR-SSH-CREDENTIAL-ID",
-          "name": "SSH Private Key"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "resource": "message",
-        "guildId": {
-          "__rl": true,
-          "value": "YOUR-DISCORD-GUILD-ID",
-          "mode": "list",
-          "cachedResultName": "Your Discord Server",
-          "cachedResultUrl": "https://discord.com/channels/YOUR-GUILD-ID"
-        },
-        "channelId": {
-          "__rl": true,
-          "value": "YOUR-DISCORD-CHANNEL-ID",
-          "mode": "list",
-          "cachedResultName": "honeypot-monitoring",
-          "cachedResultUrl": "https://discord.com/channels/YOUR-GUILD-ID/YOUR-CHANNEL-ID"
-        },
-        "content": "={{ $json.stdout }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.discord",
-      "typeVersion": 2,
-      "position": [
-        768,
-        -16
-      ],
-      "id": "20eb77bb-2995-4618-a2ce-0644d339047c",
-      "name": "Send Discord Alert",
-      "webhookId": "YOUR-DISCORD-WEBHOOK-ID",
-      "credentials": {
-        "discordBotApi": {
-          "id": "YOUR-DISCORD-BOT-CREDENTIAL-ID",
-          "name": "Discord Bot"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "YOUR-GOOGLE-SHEETS-ID",
-          "mode": "list",
-          "cachedResultName": "Attack Logs",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR-SHEET-ID/edit"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR-SHEET-ID/edit#gid=0"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "COMMAND": "={{ $('Format Fields').item.json.Command }}",
-            "ATTACKER IP": "={{ $('Format Fields').item.json.Attacker_IP }}",
-            "TIMESTAMP": "={{ $('Format Fields').item.json.Timestamp }}",
-            "COUNTRY": "={{ $node[\"AbuseIPDB Reputation Check\"].json[\"data\"][\"countryCode\"] }}",
-            "ISP": "={{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp }}",
-            "ABUSEIPDB SCORE": "={{ $node[\"AbuseIPDB Reputation Check\"].json[\"data\"][\"abuseConfidenceScore\"] }}%"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "TIMESTAMP",
-              "displayName": "TIMESTAMP",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "ATTACKER IP",
-              "displayName": "ATTACKER IP",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "COUNTRY",
-              "displayName": "COUNTRY",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "ISP",
-              "displayName": "ISP",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "COMMAND",
-              "displayName": "COMMAND",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "ABUSEIPDB SCORE",
-              "displayName": "ABUSEIPDB SCORE",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
-      "position": [
-        -320,
-        -128
-      ],
-      "id": "04f85af8-01c1-4bc9-a8bb-534bca3a7356",
-      "name": "Log to Google Sheets",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR-GOOGLE-SHEETS-CREDENTIAL-ID",
-          "name": "Google Sheets Account"
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "SSH Private Key account"
         }
       }
     },
     {
       "parameters": {
         "authentication": "privateKey",
-        "command": "=sudo iptables -I INPUT 1 -s {{ $node[\"Format Fields\"].json[\"Attacker_IP\"] }} -j DROP"
+        "command": "=sudo iptables -I INPUT 1 -s {{ $node[\"Format Fields\"].json[\"Attacker_IP\"] }} -j DROP && sudo netfilter-persistent save"
       },
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        688,
-        -288
+        -1072,
+        -352
       ],
-      "id": "56dad4b0-8a1a-455c-85a7-88a48724d587",
+      "id": "1d4245d4-b18e-4f4a-9ea6-0595fb7c148e",
       "name": "Block IP via iptables",
       "credentials": {
         "sshPrivateKey": {
-          "id": "YOUR-SSH-CREDENTIAL-ID",
-          "name": "SSH Private Key"
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "SSH Private Key account"
         }
       }
     },
@@ -292,76 +151,67 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        400,
-        -272
+        -1360,
+        -336
       ],
-      "id": "2dbb6d74-537d-470f-aaa7-922154fb22c6",
+      "id": "ab9990c2-788f-427a-9063-19c5f5d774e5",
       "name": "Check Abuse Score"
     },
     {
       "parameters": {
         "curlImport": "",
         "httpVariantWarning": "",
-        "method": "GET",
-        "url": "=https://www.virustotal.com/api/v3/urls/{{ $json.url_detected.toBase64().replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '') }}",
+        "method": "POST",
+        "url": "=https://www.virustotal.com/api/v3/urls/{{ $('URL encoding').item.json.url_base64 }}",
+        "": "",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "virusTotalApi",
         "provideSslCertificates": false,
         "sendQuery": false,
         "sendHeaders": false,
-        "sendBody": false,
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('URL encoding').item.json.url_detected }}"
+            }
+          ]
+        },
         "options": {},
         "infoMessage": ""
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        272,
-        -80
+        -1008,
+        16
       ],
-      "id": "1bde22dc-731a-47a3-9321-3ce80312839a",
+      "id": "823d5f84-aa8d-470c-9ba3-7de19b553a09",
       "name": "VirusTotal URL Scan",
       "extendsCredential": "virusTotalApi",
       "credentials": {
         "virusTotalApi": {
-          "id": "YOUR-VIRUSTOTAL-CREDENTIAL-ID",
-          "name": "VirusTotal API"
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "VirusTotal account"
         }
       },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Safely extract command from \"Format Fields\" node to avoid case errors\nconst command = $('Format Fields').item.json.Command || \"\";\n\n// Enhanced regex to capture URLs\nconst urlRegex = /(https?:\\/\\/[^\\s\"';<>]+)/gi;\nconst foundUrls = command.match(urlRegex);\n\nlet cleanUrl = null;\nif (foundUrls && foundUrls.length > 0) {\n  // Remove periods or commas that the attacker may have typed at the end of the URL\n  cleanUrl = foundUrls[0].replace(/[.,\"';<>]$/g, '');\n}\n\nreturn {\n  json: {\n    ...$input.item.json, // Keep spreadsheet data\n    url_detected: cleanUrl,\n    contains_url: !!cleanUrl\n  }\n};"
+        "jsCode": "// 1. Obtains raw command\nconst command = $node[\"Format Fields\"].json[\"Command\"] || \"\";\n\n// 2. Global regex for URLs\nconst urlRegex = /(https?:\\/\\/[^\\s\"'`;<>^\\\\)]+)/gi;\nconst foundUrls = command.match(urlRegex);\n\n// If there's no URLs returns an empty item\nif (!foundUrls || foundUrls.length === 0) {\n    return [{\n        json: {\n            ...$input.item.json,\n            url_detected: null,\n            url_base64: null,\n            contains_url: false\n        }\n    }];\n}\n\n// 3. Transform each URL into a unique n8n item\nreturn foundUrls.map(url => {\n    // Residual char parsing\n    const cleanUrl = url.replace(/[.,;:)\\\\\\]>]+$/, \"\");\n    \n    // Try to generate the base 64 id for VirusTotal\n    const urlId = Buffer.from(cleanUrl)\n        .toString('base64')\n        .replace(/\\+/g, '-')\n        .replace(/\\//g, '_')\n        .replace(/=+$/, '');\n\n    return {\n        json: {\n            ...$input.item.json, // Matains both IP and Timestamp from original node\n            url_detected: cleanUrl,\n            url_base64: urlId,\n            contains_url: true\n        }\n    };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -128,
-        -32
+        -1888,
+        -48
       ],
-      "id": "0b240744-2d0c-414e-92de-b05eb2d65af1",
+      "id": "39ca5eba-8e41-4b4e-9884-404d13bd78c0",
       "name": "Extract URLs from Commands"
-    },
-    {
-      "parameters": {
-        "authentication": "privateKey",
-        "command": "=PROMPT=$(cat <<'EOF'\nYou are a Senior Malware Analyst and Threat Intelligence Specialist.\nYour mission is to analyze malicious URLs detected in honeypot attacks and provide actionable intelligence.\n\n<environment_context>\n- Asset: VPS running as Honeypot (Cowrie SSH/Telnet honeypot).\n- Detection: URL extracted from attacker command sequence and scanned via VirusTotal API.\n</environment_context>\n\n<incident_data>\n- Attacker IP: {{ $node[\"Parse Honeypot Data\"].json[\"Attacker_IP\"] }}\n- Extracted URL: {{ $node[\"Extract URLs from Commands\"].json.url_detected }}\n- VirusTotal Scan Results: {{ $json }}\n- Geolocation & ISP: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.countryCode || \"Unknown\" }} | {{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp || \"Unknown\" }}\n- Command Sequence: {{ $node[\"Parse Honeypot Data\"].json[\"Full_Commands\"] }}\n- Timestamp: {{ $node[\"Parse Honeypot Data\"].json[\"Timestamp\"] }}\n</incident_data>\n\n<analysis_rules>\n1. MALWARE CLASSIFICATION: Identify malware family/type based on VirusTotal results.\n2. THREAT LEVEL: Assess the severity of the malicious payload.\n3. IOC EXTRACTION: Extract relevant Indicators of Compromise.\n4. CAMPAIGN IDENTIFICATION: Determine if this is part of a known attack campaign.\n</analysis_rules>\n\n<discord_output_instruction>\nGenerate a structured malware alert for Discord using Markdown:\n- 🦠 **MALWARE URL DETECTED**\n- **URL**: [URL]\n- **IP**: [IP] ([Country])\n- **VirusTotal Detection**: [X/Y vendors flagged as malicious]\n- **Malware Family**: [Family name]\n- **Threat Level**: [Critical/High/Medium/Low]\n- **Attack Vector**: [Description]\n- **Recommended Actions**: [Actions]\n- **IOCs**: [List of indicators]\n</discord_output_instruction>\nEOF\n)\n\ngemini --model gemini-2.0-flash \"$PROMPT\""
-      },
-      "type": "n8n-nodes-base.ssh",
-      "typeVersion": 1,
-      "position": [
-        512,
-        -80
-      ],
-      "id": "4065b841-a99b-4080-89d0-1913501ae973",
-      "name": "AI Malware Analysis",
-      "credentials": {
-        "sshPrivateKey": {
-          "id": "YOUR-SSH-CREDENTIAL-ID",
-          "name": "SSH Private Key"
-        }
-      }
     },
     {
       "parameters": {
@@ -392,10 +242,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        48,
-        -32
+        -1712,
+        -48
       ],
-      "id": "82e155c8-9f89-4abd-ba1b-688c197e37e6",
+      "id": "4cc216ec-7547-4811-b429-a198d873f415",
       "name": "Check for URLs"
     },
     {
@@ -427,11 +277,413 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -672,
-        -32
+        -2432,
+        -48
       ],
-      "id": "c8dc4fe6-52e9-4f12-bfe5-57bcf0fbc28e",
+      "id": "e41452de-ba01-4f60-942e-743741ab3756",
       "name": "Format Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "267e8839-036a-49f4-835e-2a0bd263828b",
+              "leftValue": "={{\n(() => {\n  // 1. Tenta recuperar os dados do nó de Ameaças Múltiplas\n  let source = {};\n  try { if($(\"Extract AI Multiple Threat Analysis\").item.json.title) source = $(\"Extract AI Multiple Threat Analysis\").item.json; } catch(e) {}\n  \n  // 2. Se falhar, tenta o nó de Malware Único\n  if (!source.title) {\n    try { if($(\"Extract AI Malware Analysis\").item.json.title) source = $(\"Extract AI Malware Analysis\").item.json; } catch(e) {}\n  }\n  \n  // 3. Se falhar, tenta o nó de Ameaça Geral\n  if (!source.title) {\n    try { if($(\"Extract AI Threat Analysis\").item.json.title) source = $(\"Extract AI Threat Analysis\").item.json; } catch(e) {}\n  }\n\n  // Define os dados finais (ou usa o atual como último recurso)\n  const data = source.title ? source : $json;\n\n  // Retorna a frase formatada\n  // Exemplo: \"🦠 MALWARE & C2 DETECTED - Severity: 85/100\"\n  return + (data.severity_number || \"0\");\n})()\n}}",
+              "rightValue": 70,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -16,
+        16
+      ],
+      "id": "d8e72d56-78ed-4702-86d9-b35d101f8776",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "=PROMPT=$(cat <<'EOF'\nYou are a Senior Malware Analyst and Threat Intelligence Specialist.\nYour mission is to analyze malicious URLs detected in honeypot attacks and provide actionable intelligence. Do not try to run commands, analyse ONLY the following informations.\nYou may only respond in the format contained in the slack_output_instruction.\nDO NOT OUTPUT YOUR INNER THOUGHT PROCESS\n\n<environment_context>\n- Asset: VPS running as Honeypot (Cowrie SSH/Telnet honeypot).\n- Detection: URL extracted from attacker command sequence and scanned via VirusTotal API.\n</environment_context>\n\n<incident_data>\n- Attacker IP: {{ $node[\"Parse Honeypot Data\"].json[\"Attacker_IP\"] }}\n- IP Reputation (AbuseIPDB): Score: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.abuseConfidenceScore || \"0\" }}% confidence of abuse.\n- Extracted URL: {{ $node[\"Extract URLs from Commands\"].json.url_detected }}\n- VirusTotal Scan Results:\n    * Malicious Flags: {{ $node[\"VirusTotal URL Scan\"].json.data.attributes.last_analysis_stats.malicious }}\n    * Harmless Flags: {{ $node[\"VirusTotal URL Scan\"].json.data.attributes.last_analysis_stats.harmless }}\n    * Undetected: {{ $node[\"VirusTotal URL Scan\"].json.data.attributes.last_analysis_stats.undetected }}\n    * Categories: {{ JSON.stringify($node[\"VirusTotal URL Scan\"].json.data.attributes.categories) }}\n- Geolocation & ISP: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.countryCode || \"Unknown\" }} | {{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp || \"Unknown\" }}\n- Command Sequence: {{ $node[\"Parse Honeypot Data\"].json[\"Full_Commands\"] }}\n- Timestamp: {{ $node[\"Parse Honeypot Data\"].json[\"Timestamp\"] }}\n</incident_data>\n\n<analysis_rules>\n1. MALWARE CLASSIFICATION: Identify malware family/type based on VirusTotal results.\n2. SEVERITY: Assess the severity of the malicious payload (0-100).\n3. IOC EXTRACTION: Extract relevant Indicators of Compromise.\n4. CAMPAIGN IDENTIFICATION: Determine if this is part of a known attack campaign.\n5. MITRE ATT&CK: Identify Tactic, Technique ID (e.g. T1059) and the specific Procedure (command used).\n</analysis_rules>\n\n<slack_output_instruction>\nGenerate a structured malware alert for Slack using Markdown:\n- 🦠 **MALWARE URL DETECTED**\n- **IP**: [IP] ([Country]) - Score: [Score]%\n- **Severity**: [0-100]\n- **URL**: [URL]\n- **VirusTotal Detection**: [X/Y vendors flagged as malicious]\n- **Malware Family**: [Family name]\n- **IOCs**: [List of indicators]\n- **MITRE ATT&CK Classification**: [Technique ID] - [Brief Procedure Description]\n- **Attack Vector**: [Description]\n- **AI Verdict**: [Short summary]\n- **Recommended Actions**: [Actions]\n</slack_output_instruction>\nEOF\n)\n\ngemini --model gemini-2.5-pro \"$PROMPT\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        16
+      ],
+      "id": "9f858bc3-0f7c-4f79-ae1d-866c55e51b44",
+      "name": "AI Malware Analysis",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "INSERT_YOUR_DOCUMENTID_HERE",
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/INSERT_YOUR_DOCUMENTID_HERE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ISP": "={{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp }}",
+            "DATA": "={{ $json.timestamp }}",
+            "IP DO INVASOR": "={{ $('Parse Honeypot Data').first().json.Attacker_IP }}",
+            "PAÍS": "={{ $('Extract URLs from Commands').first().json.data.countryCode }}",
+            "COMANDO": "={{ $('Parse Honeypot Data').first().json.Full_Commands }}",
+            "SCORE ABUSEIPDB": "={{ $('AbuseIPDB Reputation Check').first().json.data.abuseConfidenceScore }}/100",
+            "MITRE_TACTIC": "={{ $json.mitre_tactic }}",
+            "SSH_CLIENT": "={{ $('Webhook').item.json.user-agent }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "DATA",
+              "displayName": "DATA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "IP DO INVASOR",
+              "displayName": "IP DO INVASOR",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PAÍS",
+              "displayName": "PAÍS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ISP",
+              "displayName": "ISP",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "COMANDO",
+              "displayName": "COMANDO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SCORE ABUSEIPDB",
+              "displayName": "SCORE ABUSEIPDB",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "MITRE_TACTIC",
+              "displayName": "MITRE_TACTIC",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SSH_CLIENT",
+              "displayName": "SSH_CLIENT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -224,
+        16
+      ],
+      "id": "1040f567-2c67-42b8-b504-25eebed4876f",
+      "name": "Log to Google Sheets1",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "=PROMPT=$(cat <<'EOF'\nYou are a Senior Malware Analyst and Threat Intelligence Specialist.\nYour mission is to analyze malicious URLs detected in honeypot attacks and provide actionable intelligence. Do not try to run commands, analyse ONLY the following informations.\nYou may only respond in the format contained in the slack_output_instruction.\nDO NOT OUTPUT YOUR INNER THOUGHT PROCESS\n\n<environment_context>\n- Asset: VPS running as Honeypot (Cowrie SSH/Telnet honeypot).\n- Detection: URL extracted from attacker command sequence and scanned via VirusTotal API.\n</environment_context>\n\n<incident_data>\n- Attacker IP: {{ $node[\"Parse Honeypot Data\"].json[\"Attacker_IP\"] }}\n- IP Reputation (AbuseIPDB): Score: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.abuseConfidenceScore || \"0\" }}% confidence of abuse.\n- Extracted URLs:\n  - Detected Install script: {{ $('URL encoding').item.json.detected_install_script }}\n  - Possible C2 Server: {{ $('URL encoding').item.json.detected_c2_server }}\n  - All found URLs: {{ $('URL encoding').item.json.consolidated_urls.join(\", \") }}\n- VirusTotal Scan Results:\n  - For install script:\n      * Malicious Flags: {{ $node[\"VirusTotal Install Script URL Scan\"].json.data.attributes.last_analysis_stats.malicious || \"Not found\" }}\n      * Harmless Flags: {{ $node[\"VirusTotal Install Script URL Scan\"].json.data.attributes.last_analysis_stats.harmless || \"Not found\" }}\n      * Undetected: {{ $node[\"VirusTotal Install Script URL Scan\"].json.data.attributes.last_analysis_stats.undetected || \"Not found\" }}\n      * Categories: {{ JSON.stringify($node[\"VirusTotal Install Script URL Scan\"].json.data.attributes.categories) || \"Not found\" }}\n  - For C2 Server:\n      * Malicious Flags: {{ $node[\"VirusTotal C2 Server URL Scan\"].json.data.attributes.last_analysis_stats.malicious || \"Not found\" }}\n      * Harmless Flags: {{ $node[\"VirusTotal C2 Server URL Scan\"].json.data.attributes.last_analysis_stats.harmless || \"Not found\" }}\n      * Undetected: {{ $node[\"VirusTotal C2 Server URL Scan\"].json.data.attributes.last_analysis_stats.undetected || \"Not found\" }}\n      * Categories: {{ JSON.stringify($node[\"VirusTotal C2 Server URL Scan\"].json.data.attributes.categories) || \"Not found\" }}\n- Geolocation & ISP: {{ $node[\"AbuseIPDB Reputation Check\"].json.data.countryName || \"Unknown\" }} | {{ $node[\"AbuseIPDB Reputation Check\"].json.data.isp || \"Unknown\" }}\n- Command Sequence: {{ $node[\"Parse Honeypot Data\"].json[\"Full_Commands\"] }}\n- Timestamp: {{ $node[\"Parse Honeypot Data\"].json[\"Timestamp\"] }}\n</incident_data>\n\n<analysis_rules>\n1. MALWARE CLASSIFICATION: Identify malware family/type based on VirusTotal results.\n2. SEVERITY: Assess the severity of the malicious payload (0-100).\n3. IOC EXTRACTION: Extract relevant Indicators of Compromise.\n4. CAMPAIGN IDENTIFICATION: Determine if this is part of a known attack campaign.\n5. MITRE ATT&CK: Identify Tactic, Technique ID (e.g. T1059) and the specific Procedure (command used).\n6. ZERO-DAY EVALUATION: If VirusTotal results are \"NOT FOUND\", analyze the command syntax (e.g., wget/curl to unknown IPs) to confirm if this is a targeted or new campaign.\n</analysis_rules>\n\n<slack_output_instruction>\nGenerate a structured malware alert for Slack using Markdown:\n- 🦠 **MALWARE URL DETECTED**\n- **IP**: [IP] ([Country]) - Score: [Score]%\n- **Severity**: [0-100]\n- **URL**: [URL]\n- **VirusTotal Detection**: [X/Y vendors flagged as malicious]\n- **Malware Family**: [Family name]\n- **C2 Token**: [Token found or N/A]\n- **IOCs**: [List of indicators]\n- **MITRE ATT&CK Classification**: [Technique ID] - [Brief Procedure Description]\n- **Attack Vector**: [Description]\n- **AI Verdict**: [Short summary]\n- **Recommended Actions**: [Actions]\n</slack_output_instruction>\nEOF\n)\n\ngemini --model gemini-2.5-pro \"$PROMPT\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        -144
+      ],
+      "id": "0635034d-fad4-45bb-9879-bc8536941f0a",
+      "name": "AI Malware Multiple Threats Analysis",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "curlImport": "",
+        "httpVariantWarning": "",
+        "method": "GET",
+        "url": "=https://www.virustotal.com/api/v3/urls/{{ $json.install_script_base64 }}",
+        "": "",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "virusTotalApi",
+        "provideSslCertificates": false,
+        "sendQuery": false,
+        "sendHeaders": false,
+        "sendBody": false,
+        "options": {},
+        "infoMessage": ""
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1120,
+        -144
+      ],
+      "id": "936fa527-a2b9-461b-95a1-689b6e070a0d",
+      "name": "VirusTotal Install Script URL Scan",
+      "extendsCredential": "virusTotalApi",
+      "credentials": {
+        "virusTotalApi": {
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "VirusTotal account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "curlImport": "",
+        "httpVariantWarning": "",
+        "method": "GET",
+        "url": "=https://www.virustotal.com/api/v3/urls/{{ $('URL encoding').item.json.c2_server_base64 }}",
+        "": "",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "virusTotalApi",
+        "provideSslCertificates": false,
+        "sendQuery": false,
+        "sendHeaders": false,
+        "sendBody": false,
+        "options": {},
+        "infoMessage": ""
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -928,
+        -144
+      ],
+      "id": "5ae5c43d-d2b5-4646-9782-10283222692a",
+      "name": "VirusTotal C2 Server URL Scan",
+      "extendsCredential": "virusTotalApi",
+      "credentials": {
+        "virusTotalApi": {
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "VirusTotal account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Function for compatibility with VirusTotal's v3 API\nfunction generateVTId(url) {\n    if (!url || url === \"N/A\" || typeof url !== 'string') return \"N/A\";\n\n    // 1. URL parsing\n    const cleanUrl = url.trim()\n        .replace(/['\"`;]/g, '')    \n        .replace(/[.,]$/, '')      \n        .replace(/\\/$/, '');       \n\n    // 2. Base64 converting, turning into a Safe URL and removing padding (=)\n    return Buffer.from(cleanUrl)\n        .toString('base64')\n        .replace(/\\+/g, '-')       \n        .replace(/\\//g, '_')      \n        .replace(/=+$/, '');       \n}\n\n// Obtains every data that came to this node\nconst items = $input.all();\nlet results = [];\n\n// variables for analysis\nlet install_script = \"N/A\";\nlet c2_server = \"N/A\";\nlet all_urls = [];\n\nitems.forEach(item => {\n    const url = item.json.url_detected;\n    if (!url) return;\n\n    all_urls.push(url);\n    const lowUrl = url.toLowerCase();\n\n    // Screening Logic\n    if (lowUrl.includes('github') || lowUrl.endsWith('.sh') || lowUrl.includes('install')) {\n        install_script = url;\n    } else {\n        c2_server = url;\n    }\n});\n\n// Return only one item for VirusTotal.\nreturn [{\n    json: {\n        ...items[0].json, // Preserves IP and Timestamp data from the first item.\n        consolidated_urls: all_urls,\n        detected_install_script: install_script,\n        install_script_base64: generateVTId(install_script),\n        detected_c2_server: c2_server,\n        c2_server_base64: generateVTId(c2_server),\n        has_multiple_threats: all_urls.length > 1\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1504,
+        -176
+      ],
+      "id": "5bb33b20-75c3-46ce-ad1d-8e1913d2151d",
+      "name": "URL encoding"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8e24dc97-5bac-4f3d-928a-ace5dffa2ecf",
+              "leftValue": "={{ $json.has_multiple_threats }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1360,
+        -176
+      ],
+      "id": "a298e1a9-69c2-49cb-9c9f-d70840ac0252",
+      "name": "Multiple URLs?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const report = $input.item.json.stdout || \"\";\nconst urlData = $(\"URL encoding\").first().json; \n\nfunction cleanText(text) {\n    if (!text) return \"N/A\";\n    return text.replace(/\\*\\*/g, '').replace(/`/g, '').replace(/^[:\\s-]+/, '').trim();\n}\n\nfunction extractValue(text, keywords) {\n    const keywordPattern = keywords.join(\"|\").replace(/\\./g, \"\\\\.\"); \n    const regex = new RegExp(`(?:${keywordPattern})[\\\\*\\\\s:]*([\\\\s\\\\S]*?)(?=\\\\n\\\\s*(?:-|\\\\*\\\\*|${keywordPattern})|$)`, \"i\");\n    const match = text.match(regex);\n    return match && match[1] ? cleanText(match[1]) : \"N/A\";\n}\n\n// --- Extraction ---\nconst ipRaw = extractValue(report, [\"IP\", \"Attacker IP\"]);\nconst severityRaw = extractValue(report, [\"Severity\", \"Severity Score\"]);\nconst malwareFamily = extractValue(report, [\"Malware Family\", \"Malware Type\"]);\nlet mitreRaw = extractValue(report, [\"MITRE ATT&CK Classification\", \"MITRE ATT&CK\", \"MITRE\"]);\nconst mitre = mitreRaw.replace(/^Classification[:\\s]*/i, \"\"); \nconst verdict = extractValue(report, [\"AI Verdict\", \"Verdict\", \"Short summary\"]);\nconst actions = extractValue(report, [\"Recommended Actions\", \"Suggested Actions\", \"Actions\"]);\n\n// Token Extraction\nconst c2Token = extractValue(report, [\"C2 Token\", \"Token\", \"API Key\", \"Secret\"]);\n\n// --- DATA PROCESSING ---\nconst severityNum = parseInt(severityRaw.replace(/\\D/g, ''), 10) || 0;\nconst installScript = urlData.detected_install_script || \"N/A\";\nconst c2Server = urlData.detected_c2_server || \"N/A\";\nconst isMalware = severityNum > 60 || report.toLowerCase().includes(\"malware\");\nconst title = isMalware ? \"🦠 MALWARE & C2 DETECTED\" : \"🛡️ SECURITY INCIDENT DETECTED\";\n\nreturn [{\n    json: {\n        title: title,\n        ip: ipRaw,\n        severity: severityRaw, \n        severity_number: severityNum,\n        malware_family: malwareFamily,\n        install_script: installScript,\n        c2_server: c2Server,\n        c2_token: c2Token,\n        summary: verdict,\n        mitre_tactic: mitre,\n        actions: actions,\n        timestamp: new Date().toISOString(),\n        is_malware: isMalware\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        -144
+      ],
+      "id": "8a993390-89e5-41f0-a3be-720755cae1ba",
+      "name": "Extract AI Multiple Threat Analysis"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * --- INPUT CONFIGURATION ---\n * Retrieves the raw report (stdout) from the previous node.\n * Defaults to an empty string or \"N/A\" if data is missing.\n */\nconst report = $input.item.json.stdout || \"\";\nconst detectedUrl = $(\"Extract URLs from Commands\").first().json.url_detected || \"N/A\";\n\n/**\n * Helper Function: cleanText\n * Removes Markdown formatting (bold **, code `) and unwanted leading characters\n * (colons, spaces, hyphens) to clean up the extracted strings.\n */\nfunction cleanText(text) {\n    if (!text) return \"N/A\";\n    return text.replace(/\\*\\*/g, '').replace(/`/g, '').replace(/^[:\\s-]+/, '').trim();\n}\n\n/**\n * Helper Function: extractValue\n * dynamically creates a Regex to find specific keywords and capture the text immediately following them.\n * It stops capturing when it hits a new line or a new known keyword.\n * * @param {string} text - The full report text.\n * @param {Array} keywords - List of keywords to search for (e.g., [\"IP\", \"Address\"]).\n */\nfunction extractValue(text, keywords) {\n    const keywordPattern = keywords.join(\"|\").replace(/\\./g, \"\\\\.\"); \n    // Regex logic: Find keyword -> ignore separators (*, space, :) -> capture content -> stop at lookahead (newline or next keyword).\n    const regex = new RegExp(`(?:${keywordPattern})[\\\\*\\\\s:]*([\\\\s\\\\S]*?)(?=\\\\n\\\\s*(?:-|\\\\*\\\\*|${keywordPattern})|$)`, \"i\");\n    const match = text.match(regex);\n    return match && match[1] ? cleanText(match[1]) : \"N/A\";\n}\n\n// --- DATA EXTRACTION ---\n// Uses extractValue to parse specific fields from the raw report.\nconst ipRaw = extractValue(report, [\"IP\"]);\nconst severityRaw = extractValue(report, [\"Severity\"]);\nconst malwareFamily = extractValue(report, [\"Malware Family\"]);\n\n// MITRE Classification extraction and specific cleanup\nlet mitreRaw = extractValue(report, [\"MITRE ATT&CK Classification\", \"MITRE\"]);\nconst mitre = mitreRaw.replace(/^Classification[:\\s]*/i, \"\");\n\nconst verdict = extractValue(report, [\"AI Verdict\"]);\nconst actions = extractValue(report, [\"Recommended Actions\", \"Actions\"]);\n\n// Token Extraction (looks for C2 Token, standard Token, or API Key)\nconst c2Token = extractValue(report, [\"C2 Token\", \"Token\", \"API Key\"]);\n\n// --- LOGIC & TRANSFORMATION ---\n\n// Parse Severity: Extract only digits from the string and convert to Integer.\nconst severityNum = parseInt(severityRaw.replace(/\\D/g, ''), 10) || 0;\n\n// Logic to classify the URL type:\n// Checks if the URL ends with script extensions (.sh, .py, .pl) or contains \"github\".\nconst isScript = /\\.(sh|py|pl)$/i.test(detectedUrl) || /github/i.test(detectedUrl);\n\n// --- OUTPUT GENERATION ---\n// Returns the final structured JSON object.\nreturn [{\n    json: {\n        title: \"🦠 MALWARE URL DETECTED\",\n        ip: ipRaw,\n        severity: severityRaw,\n        severity_number: severityNum,\n        malware_family: malwareFamily,\n        // Conditional Logic: Assigns URL to install_script if it looks like a script, otherwise to c2_server.\n        install_script: isScript ? detectedUrl : \"N/A\",\n        c2_server: !isScript ? detectedUrl : \"N/A\",\n        c2_token: c2Token,\n        summary: verdict,\n        mitre_tactic: mitre,\n        actions: actions,\n        timestamp: new Date().toISOString(),\n        is_malware: true\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        16
+      ],
+      "id": "02b6c77c-b79e-4dee-ae4c-7e5304f2348f",
+      "name": "Extract AI Malware Analysis"
+    },
+    {
+      "parameters": {
+        "jsCode": "const report = $input.item.json.stdout || \"\";\n\nfunction cleanText(text) {\n    if (!text) return \"N/A\";\n    return text.replace(/\\*\\*/g, '').replace(/`/g, '').replace(/^[:\\s-]+/, '').trim();\n}\n\nfunction extractValue(text, keywords) {\n    const keywordPattern = keywords.join(\"|\");\n    const regex = new RegExp(`(?:${keywordPattern})[:\\\\s]*([\\\\s\\\\S]*?)(?=\\\\n\\\\s*(?:-|\\\\*\\\\*|${keywordPattern}|$))`, \"i\");\n    const match = text.match(regex);\n    return match && match[1] ? cleanText(match[1]) : \"N/A\";\n}\n\n// Extraction based on the node \"General Threat\"\nconst ipRaw = extractValue(report, [\"IP\"]);\nconst severityRaw = extractValue(report, [\"Severity\"]);\nconst mitre = extractValue(report, [\"MITRE ATT&CK Classification\", \"MITRE\"]);\nconst verdict = extractValue(report, [\"AI Verdict\"]);\nconst actions = extractValue(report, [\"Suggested Actions\"]);\nconst technical = extractValue(report, [\"Technical Insight\"]);\n\nconst severityNum = parseInt(severityRaw.replace(/\\D/g, ''), 10) || 0;\n\n// Builds a combined summary with both \"Veredict\" and \"Technical Insight\"\nconst fullSummary = technical !== \"N/A\" ? `${verdict}\\n\\nTechnical Insight: ${technical}` : verdict;\n\nreturn [{\n    json: {\n        title: \"🛡️ SECURITY INCIDENT DETECTED\",\n        ip: ipRaw,\n        severity: severityRaw,\n        severity_number: severityNum,\n        malware_family: \"N/A\", // Not applicable General Threats\n        install_script: \"N/A\",\n        c2_server: \"N/A\",\n        summary: fullSummary,\n        mitre_tactic: mitre,\n        actions: actions,\n        timestamp: new Date().toISOString(),\n        is_malware: false\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        160
+      ],
+      "id": "546dc2c6-dd33-477c-8cd8-f59dae0058d7",
+      "name": "Extract AI Threat Analysis"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": "INSERT_YOUR_CHANNELID_HERE",
+        "messageType": "block",
+        "blocksUi": "={{\n(() => {\n  // 1. BUSCA INTELIGENTE DE DADOS (Recupera dados dos nós anteriores)\n  let source = {};\n  try { if($(\"Extract AI Multiple Threat Analysis\").item.json.title) source = $(\"Extract AI Multiple Threat Analysis\").item.json; } catch(e) {}\n  if (!source.title) { try { if($(\"Extract AI Malware Analysis\").item.json.title) source = $(\"Extract AI Malware Analysis\").item.json; } catch(e) {} }\n  if (!source.title) { try { if($(\"Extract AI Threat Analysis\").item.json.title) source = $(\"Extract AI Threat Analysis\").item.json; } catch(e) {} }\n\n  // Define os dados finais\n  const data = source.title ? source : $json;\n\n  // 2. CONSTRUÇÃO DOS BLOCOS (Lista Principal)\n  const blocks = [\n    {\n      \"type\": \"header\",\n      \"text\": {\n        \"type\": \"plain_text\",\n        \"text\": data.title || \"🚨 Security Alert\",\n        \"emoji\": true\n      }\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*👤 Attacker IP:*\\n\" + (data.ip || \"Unknown\")\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*🔥 Severity:*\\n\" + (data.severity_number || 0) + \"/100\"\n        }\n      ]\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*🦠 Malware Family:*\\n\" + (data.malware_family || \"N/A\")\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*🔎 Script/URL:*\\n\" + (data.install_script !== \"N/A\" && data.install_script ? data.install_script : (data.c2_server !== \"N/A\" && data.c2_server ? data.c2_server : \"N/A\"))\n        }\n      ]\n    },\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*🔫 MITRE ATT&CK:*\\n\" + (data.mitre_tactic || \"N/A\")\n      }\n    },\n    {\n      \"type\": \"divider\"\n    },\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*🤖 AI Analysis:*\\n\" + (data.summary || \"No summary available.\")\n      }\n    }\n  ];\n\n  // 3. INSERÇÃO CONDICIONAL DO TOKEN (Sem usar 'spread' para evitar erros)\n  // Se o token existir e não for \"N/A\", adicionamos este bloco à lista\n  if (data.c2_token && data.c2_token !== \"N/A\") {\n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*🔑 C2 Token Detected:*\\n`\" + data.c2_token + \"`\"\n      }\n    });\n  }\n\n  // 4. ADICIONAR O RESTO DOS BLOCOS (Ações e Rodapé)\n  blocks.push(\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*🛡️ Suggested Actions:*\\n\" + (data.actions || \"Check logs manually.\")\n      }\n    },\n    {\n      \"type\": \"divider\"\n    },\n    {\n      \"type\": \"actions\",\n      \"elements\": [\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"🚫 Ban IP\",\n            \"emoji\": true\n          },\n          \"style\": \"danger\",\n          \"value\": \"block_\" + (data.ip ? data.ip.split(' ')[0] : \"0.0.0.0\"),\n          \"action_id\": \"block_ip_action\"\n        },\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"🔍 URLScan.io\",\n            \"emoji\": true\n          },\n          \"url\": \"https://urlscan.io/search/#\" + (data.install_script !== \"N/A\" && data.install_script ? data.install_script : (data.c2_server !== \"N/A\" && data.c2_server ? data.c2_server : \"\")),\n          \"action_id\": \"scan_url_action\"\n        }\n      ]\n    },\n    {\n      \"type\": \"context\",\n      \"elements\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"Generated by Honeypot Sentinel • \" + (data.timestamp || \"Just now\")\n        }\n      ]\n    }\n  );\n\n  return { \"blocks\": blocks };\n})()\n}}",
+        "text": "={{\n(() => {\n  // 1. Tenta recuperar os dados do nó de Ameaças Múltiplas\n  let source = {};\n  try { if($(\"Extract AI Multiple Threat Analysis\").item.json.title) source = $(\"Extract AI Multiple Threat Analysis\").item.json; } catch(e) {}\n  \n  // 2. Se falhar, tenta o nó de Malware Único\n  if (!source.title) {\n    try { if($(\"Extract AI Malware Analysis\").item.json.title) source = $(\"Extract AI Malware Analysis\").item.json; } catch(e) {}\n  }\n  \n  // 3. Se falhar, tenta o nó de Ameaça Geral\n  if (!source.title) {\n    try { if($(\"Extract AI Threat Analysis\").item.json.title) source = $(\"Extract AI Threat Analysis\").item.json; } catch(e) {}\n  }\n\n  // Define os dados finais (ou usa o atual como último recurso)\n  const data = source.title ? source : $json;\n\n  // Retorna a frase formatada\n  // Exemplo: \"🦠 MALWARE & C2 DETECTED - Severity: 85/100\"\n  return (data.title || \"🚨 Security Alert\") + \" - Severity: \" + (data.severity_number || data.severity || \"0\") + \"/100\";\n})()\n}}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        208,
+        -80
+      ],
+      "id": "1b0f8098-0062-4b76-a6f8-730bf1294618",
+      "name": "Message For Critical Alerts",
+      "webhookId": "INSERT_YOUR_WEBHOOKID_HERE",
+      "credentials": {
+        "slackApi": {
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": "INSERT_YOUR_CHANNELID_HERE",
+        "messageType": "block",
+        "blocksUi": "={{\n(() => {\n  // 1. BUSCA INTELIGENTE DE DADOS (Recupera dados dos nós anteriores)\n  let source = {};\n  try { if($(\"Extract AI Multiple Threat Analysis\").item.json.title) source = $(\"Extract AI Multiple Threat Analysis\").item.json; } catch(e) {}\n  if (!source.title) { try { if($(\"Extract AI Malware Analysis\").item.json.title) source = $(\"Extract AI Malware Analysis\").item.json; } catch(e) {} }\n  if (!source.title) { try { if($(\"Extract AI Threat Analysis\").item.json.title) source = $(\"Extract AI Threat Analysis\").item.json; } catch(e) {} }\n\n  // Define os dados finais\n  const data = source.title ? source : $json;\n\n  // 2. CONSTRUÇÃO DOS BLOCOS (Lista Principal)\n  const blocks = [\n    {\n      \"type\": \"header\",\n      \"text\": {\n        \"type\": \"plain_text\",\n        \"text\": data.title || \"🚨 Security Alert\",\n        \"emoji\": true\n      }\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*👤 Attacker IP:*\\n\" + (data.ip || \"Unknown\")\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*🔥 Severity:*\\n\" + (data.severity_number || 0) + \"/100\"\n        }\n      ]\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*🦠 Malware Family:*\\n\" + (data.malware_family || \"N/A\")\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*🔎 Script/URL:*\\n\" + (data.install_script !== \"N/A\" && data.install_script ? data.install_script : (data.c2_server !== \"N/A\" && data.c2_server ? data.c2_server : \"N/A\"))\n        }\n      ]\n    },\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*🔫 MITRE ATT&CK:*\\n\" + (data.mitre_tactic || \"N/A\")\n      }\n    },\n    {\n      \"type\": \"divider\"\n    },\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*🤖 AI Analysis:*\\n\" + (data.summary || \"No summary available.\")\n      }\n    }\n  ];\n\n  // 3. INSERÇÃO CONDICIONAL DO TOKEN (Sem usar 'spread' para evitar erros)\n  // Se o token existir e não for \"N/A\", adicionamos este bloco à lista\n  if (data.c2_token && data.c2_token !== \"N/A\") {\n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*🔑 C2 Token Detected:*\\n`\" + data.c2_token + \"`\"\n      }\n    });\n  }\n\n  // 4. ADICIONAR O RESTO DOS BLOCOS (Ações e Rodapé)\n  blocks.push(\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*🛡️ Suggested Actions:*\\n\" + (data.actions || \"Check logs manually.\")\n      }\n    },\n    {\n      \"type\": \"divider\"\n    },\n    {\n      \"type\": \"actions\",\n      \"elements\": [\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"🚫 Ban IP\",\n            \"emoji\": true\n          },\n          \"style\": \"danger\",\n          \"value\": \"block_\" + (data.ip ? data.ip.split(' ')[0] : \"0.0.0.0\"),\n          \"action_id\": \"block_ip_action\"\n        },\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"🔍 URLScan.io\",\n            \"emoji\": true\n          },\n          \"url\": \"https://urlscan.io/search/#\" + (data.install_script !== \"N/A\" && data.install_script ? data.install_script : (data.c2_server !== \"N/A\" && data.c2_server ? data.c2_server : \"\")),\n          \"action_id\": \"scan_url_action\"\n        }\n      ]\n    },\n    {\n      \"type\": \"context\",\n      \"elements\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"Generated by Honeypot Sentinel • \" + (data.timestamp || \"Just now\")\n        }\n      ]\n    }\n  );\n\n  return { \"blocks\": blocks };\n})()\n}}",
+        "text": "={{\n(() => {\n  // 1. Tenta recuperar os dados do nó de Ameaças Múltiplas\n  let source = {};\n  try { if($(\"Extract AI Multiple Threat Analysis\").item.json.title) source = $(\"Extract AI Multiple Threat Analysis\").item.json; } catch(e) {}\n  \n  // 2. Se falhar, tenta o nó de Malware Único\n  if (!source.title) {\n    try { if($(\"Extract AI Malware Analysis\").item.json.title) source = $(\"Extract AI Malware Analysis\").item.json; } catch(e) {}\n  }\n  \n  // 3. Se falhar, tenta o nó de Ameaça Geral\n  if (!source.title) {\n    try { if($(\"Extract AI Threat Analysis\").item.json.title) source = $(\"Extract AI Threat Analysis\").item.json; } catch(e) {}\n  }\n\n  // Define os dados finais (ou usa o atual como último recurso)\n  const data = source.title ? source : $json;\n\n  // Retorna a frase formatada\n  // Exemplo: \"🦠 MALWARE & C2 DETECTED - Severity: 85/100\"\n  return (data.title || \"🚨 Security Alert\") + \" - Severity: \" + (data.severity_number || data.severity || \"0\") + \"/100\";\n})()\n}}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        208,
+        112
+      ],
+      "id": "6647e228-f6b4-44f7-a4c3-4ae7ed8addf3",
+      "name": "Message for Noise (Low Level Threats)",
+      "webhookId": "INSERT_YOUR_WEBHOOKID_HERE",
+      "credentials": {
+        "slackApi": {
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "Slack account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -462,7 +714,12 @@
       "main": [
         [
           {
-            "node": "Log to Google Sheets",
+            "node": "Check Abuse Score",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract URLs from Commands",
             "type": "main",
             "index": 0
           }
@@ -480,32 +737,11 @@
       "main": [
         [
           {
-            "node": "Send Discord Alert",
+            "node": "Extract AI Threat Analysis",
             "type": "main",
             "index": 0
           }
         ]
-      ]
-    },
-    "Log to Google Sheets": {
-      "main": [
-        [
-          {
-            "node": "Check Abuse Score",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Extract URLs from Commands",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Block IP via iptables": {
-      "main": [
-        []
       ]
     },
     "Check Abuse Score": {
@@ -541,22 +777,11 @@
         ]
       ]
     },
-    "AI Malware Analysis": {
-      "main": [
-        [
-          {
-            "node": "Send Discord Alert",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Check for URLs": {
       "main": [
         [
           {
-            "node": "VirusTotal URL Scan",
+            "node": "URL encoding",
             "type": "main",
             "index": 0
           }
@@ -580,16 +805,158 @@
           }
         ]
       ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Message For Critical Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message for Noise (Low Level Threats)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Malware Analysis": {
+      "main": [
+        [
+          {
+            "node": "Extract AI Malware Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Malware Multiple Threats Analysis": {
+      "main": [
+        [
+          {
+            "node": "Extract AI Multiple Threat Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VirusTotal Install Script URL Scan": {
+      "main": [
+        [
+          {
+            "node": "VirusTotal C2 Server URL Scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VirusTotal C2 Server URL Scan": {
+      "main": [
+        [
+          {
+            "node": "AI Malware Multiple Threats Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "URL encoding": {
+      "main": [
+        [
+          {
+            "node": "Multiple URLs?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Multiple URLs?": {
+      "main": [
+        [
+          {
+            "node": "VirusTotal Install Script URL Scan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "VirusTotal URL Scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract AI Multiple Threat Analysis": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract AI Malware Analysis": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract AI Threat Analysis": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Block IP via iptables": {
+      "main": [
+        []
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": false
   },
-  "versionId": "",
+  "versionId": "36707340-3e91-436f-8231-74d5936f2712",
   "meta": {
-    "templateCredsSetupCompleted": false
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_N8N_INSTANCE_ID"
   },
-  "id": "",
+  "id": "ZerhxQ8hqqajz_AD8vbVu",
   "tags": []
 }
