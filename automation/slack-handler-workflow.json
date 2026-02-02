@@ -1,0 +1,232 @@
+{
+  "name": "Honeypot Sentinel - Slack Interaction Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-interactivity",
+        "options": {}
+      },
+      "name": "Webhook Interactivity",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        32
+      ],
+      "id": "e3747129-8159-444f-a5d6-f5712302534d",
+      "webhookId": "INSERT_YOUR_WEBHOOKID_HERE"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract request body\nconst body = items[0].json.body;\n\n// --- SCENARIO 1: URL VERIFICATION (Handshake) ---\n// Slack sends a \"challenge\" parameter when configuring the URL.\n// We must return this challenge to verify server ownership.\nif (body.type === 'url_verification' || body.challenge) {\n  return [\n    {\n      json: {\n        action: 'verification',\n        challenge: body.challenge\n      }\n    }\n  ];\n}\n\n// --- SCENARIO 2: BUTTON INTERACTION (Block Kit) ---\n// The 'payload' string contains the click data\nif (body.payload) {\n  try {\n    const payload = JSON.parse(body.payload);\n    \n // Security Verification (Optional - uncomment and provide your ID)\n // const MY_TEAM_ID = 'T0XXXXXX';\n // if (payload.team.id !== MY_TEAM_ID) throw new Error('Invalid Team ID');\n    \n    const action = payload.actions ? payload.actions[0] : null;\n    \n    if (action && action.action_id === 'block_ip_action') {\n      const ip = action.value.split('_')[1];\n      const user = payload.user.username;\n      \n      return [\n        {\n          json: {\n            action: 'block',\n            ip: ip,\n            user: user,\n            response_url: payload.response_url\n          }\n        }\n      ];\n    }\n  } catch (error) {\n    // Skip processing if the JSON is broken\n    return [{ json: { action: 'error', message: error.message } }];\n  }\n}\n\n// If it's neither a verification nor a known click\nreturn [{ json: { action: 'ignore' } }];"
+      },
+      "name": "Parse Slack Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        32
+      ],
+      "id": "567a1875-c6cc-46d3-b461-698def9f394e"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.action }}",
+              "value2": "block"
+            }
+          ]
+        }
+      },
+      "name": "Is Block Action?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        176,
+        48
+      ],
+      "id": "77e85919-8e6c-4fde-8f34-8fa192cb20ae"
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "=sudo iptables -I INPUT 1 -s {{ $json.ip }} -j DROP && sudo netfilter-persistent save"
+      },
+      "name": "Execute Block SSH",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        400,
+        32
+      ],
+      "id": "3e2883af-3217-4f88-95a2-eb274bcb836c",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "YOUR_CREDENCIAL_ID",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Parse Slack Payload').item.json.response_url }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "replace_original",
+              "value": "false"
+            },
+            {
+              "name": "text",
+              "value": "={{ \"✅ IP \" + $('Parse Slack Payload').item.json.ip + \" was blocked by the Honeypot Sentinel\" }}"
+            },
+            {
+              "name": "response_type",
+              "value": "in_channel"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Respond to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        624,
+        32
+      ],
+      "id": "0bdabf06-a689-49b8-9ea1-1f6590680ec3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "aa22316e-6aaa-4c40-9287-daffb14d10f9",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "verification",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -48,
+        32
+      ],
+      "id": "c1dacf1f-63fc-4284-9040-08d580b68a0a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"challenge\": \"{{ $json.challenge }}\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        176,
+        -96
+      ],
+      "id": "1db8086c-9063-4520-9c02-94eab06414a3",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Interactivity": {
+      "main": [
+        [
+          {
+            "node": "Parse Slack Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Slack Payload": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Block Action?": {
+      "main": [
+        [
+          {
+            "node": "Execute Block SSH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Block SSH": {
+      "main": [
+        [
+          {
+            "node": "Respond to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Block Action?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "7dc2af72-146e-423d-bc63-ea606edb2b1c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_N8N_INSTANCE_ID"
+  },
+  "id": "9zU0S3935uUrWV1EM78F3",
+  "tags": []
+}
