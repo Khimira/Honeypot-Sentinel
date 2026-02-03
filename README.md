@@ -1330,11 +1330,11 @@ Special thanks to the global cybersecurity community for sharing threat intellig
 
 ## 📊 Statistics
 
-![GitHub stars](https://img.shields.io/github/stars/yourusername/honeypot-sentinel?style=social)
-![GitHub forks](https://img.shields.io/github/forks/yourusername/honeypot-sentinel?style=social)
-![GitHub issues](https://img.shields.io/github/issues/yourusername/honeypot-sentinel)
-![GitHub license](https://img.shields.io/github/license/yourusername/honeypot-sentinel)
+![GitHub stars](https://img.shields.io/github/stars/Khimira/honeypot-sentinel?style=social)
+![GitHub forks](https://img.shields.io/github/forks/Khimira/honeypot-sentinel?style=social)
+![GitHub issues](https://img.shields.io/github/issues/Khimira/honeypot-sentinel)
+![GitHub license](https://img.shields.io/github/license/Khimira/honeypot-sentinel)
 
 ---
 
-**Built with ❤️ for the cybersecurity community. Stay vigilant. Stay secure.**
+**Maintained by Khimira - Built with ❤️ for the cybersecurity community. Stay vigilant. Stay secure.**
